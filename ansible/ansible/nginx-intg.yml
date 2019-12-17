@@ -1,0 +1,45 @@
+---
+- hosts: 172.31.85.34
+  become: yes
+  roles: 
+    - tomcat
+  
+  tasks:
+  
+    - name: Installs nginx web server on ubuntu
+      when: ansible_distribution == 'Ubuntu'
+      apt: 
+        pkg: nginx 
+        state: latest 
+        update_cache: true
+      notify:
+        - starting nginx
+
+    - name: Install nginx web server redhat family
+      when: ansible_os_family == "RedHat" 
+      yum: 
+        name: nginx 
+        state: installed 
+        update_cache: true
+      notify:
+        - starting nginx
+        
+    - name: add server proxy to integrate tomcat
+      copy:
+        src: /etc/ansible/files/default
+        dest: /etc/nginx/sites-available/
+      notify:
+        - restart nginx 
+
+  handlers:
+
+    - name: starting nginx 
+      service: 
+        name: nginx 
+        state: started 
+        enabled: yes
+
+    - name: restart nginx 
+      service: 
+        name: nginx 
+        state: restarted
